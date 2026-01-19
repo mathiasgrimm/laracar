@@ -196,6 +196,16 @@ Route::get('/users', function () {
 ### Vite Error
 - If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
 
+=== laracar rules ===
+
+## Project-Specific Rules
+
+### Migrations
+- Never use `$table->enum()` in migrations. Always use `$table->string()` instead.
+- Never use cascade operations like `cascadeOnDelete()`, `cascadeOnUpdate()`, or any other cascade. Use simple `->constrained()` only.
+- Never use `->default()` in migrations. All columns should be without default values.
+- Always add `->index()` when using `$table->foreignId()`. PostgreSQL does not create indexes automatically for foreign keys.
+
 === laravel/v12 rules ===
 
 ## Laravel 12
