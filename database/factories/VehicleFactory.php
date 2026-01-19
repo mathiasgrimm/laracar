@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Color;
 use App\Enums\FuelType;
 use App\Enums\Transmission;
 use App\Enums\VehicleStatus;
@@ -23,7 +24,7 @@ class VehicleFactory extends Factory
             'year_model' => fake()->randomElement([$yearManufacture, $yearManufacture + 1]),
             'price' => fake()->randomFloat(2, 15000, 500000),
             'mileage' => fake()->numberBetween(0, 200000),
-            'color' => fake()->randomElement(['Preto', 'Branco', 'Prata', 'Cinza', 'Vermelho', 'Azul']),
+            'color' => fake()->randomElement(Color::cases()),
             'fuel_type' => fake()->randomElement(FuelType::cases()),
             'transmission' => fake()->randomElement(Transmission::cases()),
             'description' => fake()->optional()->paragraph(),

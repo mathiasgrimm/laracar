@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Color;
 use App\Enums\FuelType;
 use App\Enums\Transmission;
 use App\Enums\VehicleStatus;
@@ -15,7 +16,7 @@ it('can create a vehicle', function () {
         ->and($vehicle->year_model)->toBeInt()
         ->and($vehicle->price)->toBeString()
         ->and($vehicle->mileage)->toBeInt()
-        ->and($vehicle->color)->toBeString()
+        ->and($vehicle->color)->toBeInstanceOf(Color::class)
         ->and($vehicle->fuel_type)->toBeInstanceOf(FuelType::class)
         ->and($vehicle->transmission)->toBeInstanceOf(Transmission::class)
         ->and($vehicle->status)->toBeInstanceOf(VehicleStatus::class);
