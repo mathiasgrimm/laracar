@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\CarModel;
+use App\Models\ModelVersion;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -17,7 +17,7 @@ class VehicleFactory extends Factory
 
         return [
             'user_id' => User::factory(),
-            'car_model_id' => CarModel::factory(),
+            'model_version_id' => ModelVersion::factory(),
             'year_manufacture' => $yearManufacture,
             'year_model' => fake()->randomElement([$yearManufacture, $yearManufacture + 1]),
             'price' => fake()->randomFloat(2, 15000, 500000),

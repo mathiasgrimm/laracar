@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class CarModel extends Model
 {
@@ -14,7 +15,6 @@ class CarModel extends Model
 
     protected $fillable = [
         'make_id',
-        'fipe_code',
         'name',
         'slug',
     ];
@@ -24,8 +24,13 @@ class CarModel extends Model
         return $this->belongsTo(Make::class);
     }
 
-    public function vehicles(): HasMany
+    public function versions(): HasMany
     {
-        return $this->hasMany(Vehicle::class);
+        return $this->hasMany(ModelVersion::class);
+    }
+
+    public function vehicles(): HasManyThrough
+    {
+        return $this->hasManyThrough(Vehicle::class, ModelVersion::class);
     }
 }

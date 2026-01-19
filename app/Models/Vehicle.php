@@ -18,7 +18,7 @@ class Vehicle extends Model implements HasMedia
 
     protected $fillable = [
         'user_id',
-        'car_model_id',
+        'model_version_id',
         'year_manufacture',
         'year_model',
         'price',
@@ -45,9 +45,9 @@ class Vehicle extends Model implements HasMedia
         return $this->belongsTo(User::class);
     }
 
-    public function carModel(): BelongsTo
+    public function modelVersion(): BelongsTo
     {
-        return $this->belongsTo(CarModel::class);
+        return $this->belongsTo(ModelVersion::class);
     }
 
     public function registerMediaCollections(): void

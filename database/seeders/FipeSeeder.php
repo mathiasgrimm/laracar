@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\CarModel;
 use App\Models\Make;
+use App\Models\ModelVersion;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -11,6 +12,155 @@ use Illuminate\Support\Str;
 class FipeSeeder extends Seeder
 {
     private const BASE_URL = 'https://parallelum.com.br/fipe/api/v1';
+
+    /**
+     * Nomes de modelos compostos (duas ou mais palavras).
+     * Ordenados do mais longo para o mais curto para matching correto.
+     */
+    private const COMPOUND_MODEL_NAMES = [
+        // Land Rover
+        'Range Rover Evoque',
+        'Range Rover Sport',
+        'Range Rover Velar',
+        'Range Rover',
+        'Land Cruiser Prado',
+        'Land Cruiser',
+        'Discovery Sport',
+        // Jeep
+        'Grand Cherokee',
+        'Grand Commander',
+        'Wrangler Unlimited',
+        // Toyota
+        'Hilux SW4',
+        'Corolla Cross',
+        'RAV 4',
+        'RAV4',
+        // Volkswagen
+        'Novo Fusca',
+        'Space Fox',
+        'Space Cross',
+        'Cross Fox',
+        'Saveiro Cross',
+        'Gol Rallye',
+        'Golf GTI',
+        'Golf GTD',
+        'Polo GTI',
+        // Fiat
+        'Punto T-Jet',
+        'Strada Adventure',
+        'Strada Trekking',
+        'Strada Working',
+        'Palio Weekend',
+        'Palio Adventure',
+        'Uno Mille',
+        'Grand Siena',
+        // Ford
+        'Focus Sedan',
+        'Focus Hatch',
+        'New Fiesta',
+        'Maverick Hybrid',
+        // Chevrolet
+        'S10 Blazer',
+        'Spin Activ',
+        'Cruze Sport6',
+        // Renault
+        'Grand Scenic',
+        'Megane Scenic',
+        // Honda
+        'Accord Sedan',
+        'Accord Coupe',
+        'City Sedan',
+        'City Hatchback',
+        'Civic Sedan',
+        'Civic Coupe',
+        'Civic Hatch',
+        'Civic Si',
+        'CR-V',
+        'HR-V',
+        'WR-V',
+        'ZR-V',
+        'BR-V',
+        // Hyundai
+        'Santa Fe',
+        'Vera Cruz',
+        'New Tucson',
+        // Mitsubishi
+        'Pajero Sport',
+        'Pajero Full',
+        'Pajero Dakar',
+        'Pajero TR4',
+        'L200 Triton',
+        'L200 Outdoor',
+        'Lancer Evolution',
+        // Nissan
+        'Grand Livina',
+        'X-Trail',
+        'X-Terra',
+        // Mercedes
+        'Classe A',
+        'Classe B',
+        'Classe C',
+        'Classe E',
+        'Classe S',
+        'Classe G',
+        'Classe GLA',
+        'Classe GLB',
+        'Classe GLC',
+        'Classe GLE',
+        'Classe GLS',
+        'Classe CLA',
+        'Classe CLS',
+        // BMW
+        'Série 1',
+        'Série 2',
+        'Série 3',
+        'Série 4',
+        'Série 5',
+        'Série 6',
+        'Série 7',
+        'Série 8',
+        'Serie 1',
+        'Serie 2',
+        'Serie 3',
+        'Serie 4',
+        'Serie 5',
+        'Serie 6',
+        'Serie 7',
+        'Serie 8',
+        'X1',
+        'X2',
+        'X3',
+        'X4',
+        'X5',
+        'X6',
+        'X7',
+        // Audi
+        'RS Q3',
+        'RS Q8',
+        'RS 3',
+        'RS 4',
+        'RS 5',
+        'RS 6',
+        'RS 7',
+        'SQ 5',
+        'SQ 7',
+        'SQ 8',
+        'TT RS',
+        // Porsche
+        'Cayenne Coupe',
+        'Macan S',
+        '911 Carrera',
+        '911 Turbo',
+        '911 GT3',
+        '911 GT2',
+        // Kia
+        'Soul EV',
+        'Cerato Koup',
+        // Outros
+        'Alfa Romeo',
+        'Aston Martin',
+        'New Beetle',
+    ];
 
     public function run(): void
     {
@@ -38,7 +188,12 @@ class FipeSeeder extends Seeder
         $progressBar->finish();
         $this->command->newLine();
         $this->command->info('Importação concluída!');
-        $this->command->info(sprintf('Total: %d marcas, %d modelos.', Make::count(), CarModel::count()));
+        $this->command->info(sprintf(
+            'Total: %d marcas, %d modelos, %d versões.',
+            Make::count(),
+            CarModel::count(),
+            ModelVersion::count()
+        ));
     }
 
     /**
@@ -71,16 +226,57 @@ class FipeSeeder extends Seeder
         $models = $data['modelos'] ?? [];
 
         foreach ($models as $modelData) {
-            CarModel::updateOrCreate(
+            $fullName = $modelData['nome'];
+            [$modelName, $versionName] = $this->extractModelAndVersion($fullName);
+
+            // Busca ou cria o modelo base
+            $carModel = CarModel::firstOrCreate(
                 [
                     'make_id' => $make->id,
+                    'slug' => Str::slug($modelName),
+                ],
+                [
+                    'name' => $modelName,
+                ]
+            );
+
+            // Cria a versão
+            ModelVersion::updateOrCreate(
+                [
+                    'car_model_id' => $carModel->id,
                     'fipe_code' => $modelData['codigo'],
                 ],
                 [
-                    'name' => $modelData['nome'],
-                    'slug' => Str::slug($modelData['nome']),
+                    'name' => $versionName ?: $modelName,
+                    'slug' => Str::slug($fullName),
                 ]
             );
         }
+    }
+
+    /**
+     * Extrai o nome do modelo base e a versão do nome completo da FIPE.
+     *
+     * @return array{0: string, 1: string} [modelName, versionName]
+     */
+    private function extractModelAndVersion(string $fullName): array
+    {
+        $fullName = trim($fullName);
+
+        // Verifica se começa com um nome composto conhecido
+        foreach (self::COMPOUND_MODEL_NAMES as $compound) {
+            if (stripos($fullName, $compound) === 0) {
+                $versionName = trim(substr($fullName, strlen($compound)));
+
+                return [$compound, $versionName];
+            }
+        }
+
+        // Se não, pega a primeira palavra como nome do modelo
+        $parts = preg_split('/\s+/', $fullName, 2);
+        $modelName = $parts[0] ?? $fullName;
+        $versionName = $parts[1] ?? '';
+
+        return [$modelName, $versionName];
     }
 }

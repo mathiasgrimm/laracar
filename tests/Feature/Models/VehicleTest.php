@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\CarModel;
+use App\Models\ModelVersion;
 use App\Models\User;
 use App\Models\Vehicle;
 
@@ -27,12 +27,12 @@ it('belongs to a user', function () {
         ->and($vehicle->user->id)->toBe($user->id);
 });
 
-it('belongs to a car model', function () {
-    $carModel = CarModel::factory()->create();
-    $vehicle = Vehicle::factory()->create(['car_model_id' => $carModel->id]);
+it('belongs to a model version', function () {
+    $version = ModelVersion::factory()->create();
+    $vehicle = Vehicle::factory()->create(['model_version_id' => $version->id]);
 
-    expect($vehicle->carModel)->toBeInstanceOf(CarModel::class)
-        ->and($vehicle->carModel->id)->toBe($carModel->id);
+    expect($vehicle->modelVersion)->toBeInstanceOf(ModelVersion::class)
+        ->and($vehicle->modelVersion->id)->toBe($version->id);
 });
 
 it('can have active status', function () {
@@ -64,15 +64,15 @@ it('deletes vehicles when user is deleted', function () {
     expect(Vehicle::where('user_id', $user->id)->count())->toBe(0);
 });
 
-it('deletes vehicles when car model is deleted', function () {
-    $carModel = CarModel::factory()->create();
-    Vehicle::factory()->count(3)->create(['car_model_id' => $carModel->id]);
+it('deletes vehicles when model version is deleted', function () {
+    $version = ModelVersion::factory()->create();
+    Vehicle::factory()->count(3)->create(['model_version_id' => $version->id]);
 
-    expect(Vehicle::where('car_model_id', $carModel->id)->count())->toBe(3);
+    expect(Vehicle::where('model_version_id', $version->id)->count())->toBe(3);
 
-    $carModel->delete();
+    $version->delete();
 
-    expect(Vehicle::where('car_model_id', $carModel->id)->count())->toBe(0);
+    expect(Vehicle::where('model_version_id', $version->id)->count())->toBe(0);
 });
 
 it('implements HasMedia interface', function () {

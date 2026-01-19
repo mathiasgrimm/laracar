@@ -13,12 +13,11 @@ class CarModelFactory extends Factory
 {
     public function definition(): array
     {
-        $name = fake()->words(3, true).' '.fake()->randomNumber(3);
+        $name = fake()->unique()->word();
 
         return [
             'make_id' => Make::factory(),
-            'fipe_code' => fake()->unique()->numberBetween(1000, 99999),
-            'name' => $name,
+            'name' => ucfirst($name),
             'slug' => Str::slug($name),
         ];
     }
