@@ -6,12 +6,15 @@ use App\Models\CarModel;
 use App\Models\Make;
 use App\Models\ModelVersion;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class FipeSeeder extends Seeder
 {
     private const BASE_URL = 'https://parallelum.com.br/fipe/api/v1';
+
+    private const CACHE_DIR = 'database/data/fipe';
 
     /**
      * Nomes de modelos compostos (duas ou mais palavras).
@@ -164,9 +167,11 @@ class FipeSeeder extends Seeder
 
     public function run(): void
     {
+        $this->ensureCacheDirectoryExists();
+
         $this->command->info('Importando marcas da FIPE...');
 
-        $makes = $this->fetchMakes();
+        $makes = $this->getMakes();
         $this->command->info(sprintf('Encontradas %d marcas.', count($makes)));
 
         $progressBar = $this->command->getOutput()->createProgressBar(count($makes));
@@ -196,6 +201,44 @@ class FipeSeeder extends Seeder
         ));
     }
 
+    private function ensureCacheDirectoryExists(): void
+    {
+        $path = base_path(self::CACHE_DIR);
+
+        if (! File::isDirectory($path)) {
+            File::makeDirectory($path, 0755, true);
+        }
+    }
+
+    private function getCachePath(string $filename): string
+    {
+        return base_path(self::CACHE_DIR.'/'.$filename);
+    }
+
+    /**
+     * @return array<int, array{codigo: string, nome: string}>
+     */
+    private function getMakes(): array
+    {
+        $cachePath = $this->getCachePath('makes.json');
+
+        if (File::exists($cachePath)) {
+            $this->command->info('Usando dados de marcas do cache local.');
+
+            return json_decode(File::get($cachePath), true);
+        }
+
+        $this->command->info('Buscando marcas da API FIPE...');
+        $data = $this->fetchMakes();
+
+        if (! empty($data)) {
+            File::put($cachePath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            $this->command->info('Dados de marcas salvos em cache.');
+        }
+
+        return $data;
+    }
+
     /**
      * @return array<int, array{codigo: string, nome: string}>
      */
@@ -212,24 +255,56 @@ class FipeSeeder extends Seeder
         return $response->json();
     }
 
-    private function importModelsForMake(Make $make, string $fipeCode): void
+    /**
+     * @return array<int, array{codigo: int, nome: string}>
+     */
+    private function getModelsForMake(string $fipeCode): array
+    {
+        $cachePath = $this->getCachePath("models_{$fipeCode}.json");
+
+        if (File::exists($cachePath)) {
+            return json_decode(File::get($cachePath), true);
+        }
+
+        $data = $this->fetchModelsForMake($fipeCode);
+
+        if (! empty($data)) {
+            File::put($cachePath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        }
+
+        return $data;
+    }
+
+    /**
+     * @return array<int, array{codigo: int, nome: string}>
+     */
+    private function fetchModelsForMake(string $fipeCode): array
     {
         $response = Http::timeout(30)->get(self::BASE_URL."/carros/marcas/{$fipeCode}/modelos");
 
         if (! $response->successful()) {
+            return [];
+        }
+
+        $data = $response->json();
+
+        return $data['modelos'] ?? [];
+    }
+
+    private function importModelsForMake(Make $make, string $fipeCode): void
+    {
+        $models = $this->getModelsForMake($fipeCode);
+
+        if (empty($models)) {
             $this->command->warn("Erro ao buscar modelos para marca: {$make->name}");
 
             return;
         }
 
-        $data = $response->json();
-        $models = $data['modelos'] ?? [];
-
         foreach ($models as $modelData) {
             $fullName = $modelData['nome'];
             [$modelName, $versionName] = $this->extractModelAndVersion($fullName);
 
-            // Busca ou cria o modelo base
             $carModel = CarModel::firstOrCreate(
                 [
                     'make_id' => $make->id,
@@ -240,7 +315,6 @@ class FipeSeeder extends Seeder
                 ]
             );
 
-            // Cria a versão
             ModelVersion::updateOrCreate(
                 [
                     'car_model_id' => $carModel->id,
@@ -263,7 +337,6 @@ class FipeSeeder extends Seeder
     {
         $fullName = trim($fullName);
 
-        // Verifica se começa com um nome composto conhecido
         foreach (self::COMPOUND_MODEL_NAMES as $compound) {
             if (stripos($fullName, $compound) === 0) {
                 $versionName = trim(substr($fullName, strlen($compound)));
@@ -272,7 +345,6 @@ class FipeSeeder extends Seeder
             }
         }
 
-        // Se não, pega a primeira palavra como nome do modelo
         $parts = preg_split('/\s+/', $fullName, 2);
         $modelName = $parts[0] ?? $fullName;
         $versionName = $parts[1] ?? '';
