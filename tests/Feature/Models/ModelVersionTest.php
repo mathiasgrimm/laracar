@@ -48,14 +48,3 @@ it('allows same fipe_code for different car models', function () {
     expect($version1)->toBeInstanceOf(ModelVersion::class)
         ->and($version2)->toBeInstanceOf(ModelVersion::class);
 });
-
-it('deletes versions when car model is deleted', function () {
-    $carModel = CarModel::factory()->create();
-    ModelVersion::factory()->count(3)->create(['car_model_id' => $carModel->id]);
-
-    expect(ModelVersion::where('car_model_id', $carModel->id)->count())->toBe(3);
-
-    $carModel->delete();
-
-    expect(ModelVersion::where('car_model_id', $carModel->id)->count())->toBe(0);
-});

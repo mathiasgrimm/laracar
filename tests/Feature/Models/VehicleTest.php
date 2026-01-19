@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\FuelType;
+use App\Enums\Transmission;
+use App\Enums\VehicleStatus;
 use App\Models\ModelVersion;
 use App\Models\Vehicle;
 
@@ -13,9 +16,9 @@ it('can create a vehicle', function () {
         ->and($vehicle->price)->toBeString()
         ->and($vehicle->mileage)->toBeInt()
         ->and($vehicle->color)->toBeString()
-        ->and($vehicle->fuel_type)->toBeIn(['gasolina', 'etanol', 'flex', 'diesel', 'eletrico', 'hibrido'])
-        ->and($vehicle->transmission)->toBeIn(['manual', 'automatico', 'cvt', 'automatizado'])
-        ->and($vehicle->status)->toBeIn(['ativo', 'vendido', 'pausado']);
+        ->and($vehicle->fuel_type)->toBeInstanceOf(FuelType::class)
+        ->and($vehicle->transmission)->toBeInstanceOf(Transmission::class)
+        ->and($vehicle->status)->toBeInstanceOf(VehicleStatus::class);
 });
 
 it('belongs to a model version', function () {
@@ -29,30 +32,19 @@ it('belongs to a model version', function () {
 it('can have active status', function () {
     $vehicle = Vehicle::factory()->active()->create();
 
-    expect($vehicle->status)->toBe('ativo');
+    expect($vehicle->status)->toBe(VehicleStatus::Ativo);
 });
 
 it('can have sold status', function () {
     $vehicle = Vehicle::factory()->sold()->create();
 
-    expect($vehicle->status)->toBe('vendido');
+    expect($vehicle->status)->toBe(VehicleStatus::Vendido);
 });
 
 it('can have paused status', function () {
     $vehicle = Vehicle::factory()->paused()->create();
 
-    expect($vehicle->status)->toBe('pausado');
-});
-
-it('deletes vehicles when model version is deleted', function () {
-    $version = ModelVersion::factory()->create();
-    Vehicle::factory()->count(3)->create(['model_version_id' => $version->id]);
-
-    expect(Vehicle::where('model_version_id', $version->id)->count())->toBe(3);
-
-    $version->delete();
-
-    expect(Vehicle::where('model_version_id', $version->id)->count())->toBe(0);
+    expect($vehicle->status)->toBe(VehicleStatus::Pausado);
 });
 
 it('implements HasMedia interface', function () {

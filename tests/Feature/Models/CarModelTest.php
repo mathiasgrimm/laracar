@@ -57,14 +57,3 @@ it('allows same slug for different makes', function () {
     expect($carModel1)->toBeInstanceOf(CarModel::class)
         ->and($carModel2)->toBeInstanceOf(CarModel::class);
 });
-
-it('deletes car models when make is deleted', function () {
-    $make = Make::factory()->create();
-    CarModel::factory()->count(3)->create(['make_id' => $make->id]);
-
-    expect(CarModel::where('make_id', $make->id)->count())->toBe(3);
-
-    $make->delete();
-
-    expect(CarModel::where('make_id', $make->id)->count())->toBe(0);
-});

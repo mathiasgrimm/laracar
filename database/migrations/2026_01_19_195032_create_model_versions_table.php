@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('model_versions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('car_model_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('car_model_id')->index()->constrained();
             $table->integer('fipe_code');
             $table->string('name');
             $table->string('slug');

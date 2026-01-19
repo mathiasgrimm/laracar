@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\FuelType;
+use App\Enums\Transmission;
+use App\Enums\VehicleStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -36,6 +39,9 @@ class Vehicle extends Model implements HasMedia
             'year_manufacture' => 'integer',
             'year_model' => 'integer',
             'mileage' => 'integer',
+            'fuel_type' => FuelType::class,
+            'transmission' => Transmission::class,
+            'status' => VehicleStatus::class,
         ];
     }
 
