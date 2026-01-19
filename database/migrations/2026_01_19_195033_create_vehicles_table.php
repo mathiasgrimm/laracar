@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('vehicles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('model_version_id')->constrained()->cascadeOnDelete();
             $table->smallInteger('year_manufacture');
             $table->smallInteger('year_model');
@@ -27,7 +26,6 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['status', 'created_at']);
-            $table->index('user_id');
         });
     }
 

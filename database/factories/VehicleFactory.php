@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\ModelVersion;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,7 +15,6 @@ class VehicleFactory extends Factory
         $yearManufacture = fake()->numberBetween(2010, 2025);
 
         return [
-            'user_id' => User::factory(),
             'model_version_id' => ModelVersion::factory(),
             'year_manufacture' => $yearManufacture,
             'year_model' => fake()->randomElement([$yearManufacture, $yearManufacture + 1]),
